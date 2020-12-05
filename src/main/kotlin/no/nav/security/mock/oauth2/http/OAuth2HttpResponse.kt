@@ -24,6 +24,15 @@ data class OAuth2HttpResponse(
         const val JSON = "application/json;charset=UTF-8"
         const val HTML = "text/html;charset=UTF-8"
     }
+
+    object AllowOrigin {
+        const val HEADER = "Access-Control-Allow-Origin"
+        const val WITHOUT_CREDENTIALS = "*"
+    }
+    object AllowHeaders {
+        const val HEADER = "Access-Control-Allow-Headers"
+        const val WITHOUT_CREDENTIALS = "*"
+    }
 }
 
 data class WellKnown(
@@ -34,6 +43,8 @@ data class WellKnown(
     val endSessionEndpoint: String,
     @JsonProperty("token_endpoint")
     val tokenEndpoint: String,
+    @JsonProperty("userinfo_endpoint")
+    val userInfoEndpoint: String,
     @JsonProperty("jwks_uri")
     val jwksUri: String,
     @JsonProperty("response_types_supported")
@@ -62,10 +73,24 @@ data class OAuth2TokenResponse(
     val scope: String? = null
 )
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
+data class UserInfoResponse(
+    @JsonProperty("sub")
+    val sub: String,
+    @JsonProperty("name")
+    val name: String,
+    @JsonProperty("email")
+    val email: String
+)
+
 fun json(anyObject: Any): OAuth2HttpResponse = OAuth2HttpResponse(
     headers = Headers.headersOf(
         OAuth2HttpResponse.ContentType.HEADER,
-        OAuth2HttpResponse.ContentType.JSON
+        OAuth2HttpResponse.ContentType.JSON,
+        OAuth2HttpResponse.AllowOrigin.HEADER,
+        OAuth2HttpResponse.AllowOrigin.WITHOUT_CREDENTIALS,
+        OAuth2HttpResponse.AllowHeaders.HEADER,
+        OAuth2HttpResponse.AllowHeaders.WITHOUT_CREDENTIALS
     ),
     status = 200,
     body = when (anyObject) {
@@ -80,7 +105,11 @@ fun json(anyObject: Any): OAuth2HttpResponse = OAuth2HttpResponse(
 fun html(content: String): OAuth2HttpResponse = OAuth2HttpResponse(
     headers = Headers.headersOf(
         OAuth2HttpResponse.ContentType.HEADER,
-        OAuth2HttpResponse.ContentType.HTML
+        OAuth2HttpResponse.ContentType.HTML,
+        OAuth2HttpResponse.AllowOrigin.HEADER,
+        OAuth2HttpResponse.AllowOrigin.WITHOUT_CREDENTIALS,
+        OAuth2HttpResponse.AllowHeaders.HEADER,
+        OAuth2HttpResponse.AllowHeaders.WITHOUT_CREDENTIALS
     ),
     status = 200,
     body = content
@@ -117,7 +146,11 @@ fun oauth2Error(error: ErrorObject): OAuth2HttpResponse {
     return OAuth2HttpResponse(
         headers = Headers.headersOf(
             OAuth2HttpResponse.ContentType.HEADER,
-            OAuth2HttpResponse.ContentType.JSON
+            OAuth2HttpResponse.ContentType.JSON,
+            OAuth2HttpResponse.AllowOrigin.HEADER,
+            OAuth2HttpResponse.AllowOrigin.WITHOUT_CREDENTIALS,
+            OAuth2HttpResponse.AllowHeaders.HEADER,
+            OAuth2HttpResponse.AllowHeaders.WITHOUT_CREDENTIALS
         ),
         status = responseCode,
         body = objectMapper

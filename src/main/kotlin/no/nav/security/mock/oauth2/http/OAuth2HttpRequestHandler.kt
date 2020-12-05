@@ -34,6 +34,7 @@ import no.nav.security.mock.oauth2.http.RequestType.END_SESSION
 import no.nav.security.mock.oauth2.http.RequestType.FAVICON
 import no.nav.security.mock.oauth2.http.RequestType.JWKS
 import no.nav.security.mock.oauth2.http.RequestType.TOKEN
+import no.nav.security.mock.oauth2.http.RequestType.USERINFO
 import no.nav.security.mock.oauth2.http.RequestType.WELL_KNOWN
 import no.nav.security.mock.oauth2.invalidGrant
 import no.nav.security.mock.oauth2.invalidRequest
@@ -67,6 +68,7 @@ class OAuth2HttpRequestHandler(
                 WELL_KNOWN -> json(request.toWellKnown()).also { log.debug("returning well-known json data for url=${request.url}") }
                 AUTHORIZATION -> handleAuthenticationRequest(request)
                 TOKEN -> handleTokenRequest(request)
+                USERINFO -> handleUserinfoRequest(request)
                 END_SESSION -> handleEndSessionRequest(request)
                 JWKS -> json(config.tokenProvider.publicJwkSet().toJSONObject()).also { log.debug("handle jwks request") }
                 DEBUGGER -> debuggerRequestHandler.handleDebuggerForm(request).also { log.debug("handle debugger request") }
@@ -124,6 +126,13 @@ class OAuth2HttpRequestHandler(
                 config.tokenCallbacks.firstOrNull { it.issuerId() == issuerId } ?: DefaultOAuth2TokenCallback(issuerId = issuerId)
             }
         }
+
+    private fun handleUserinfoRequest(request: OAuth2HttpRequest): OAuth2HttpResponse {
+        log.debug("handle userinfo request $request")
+
+        val userinfoResponse = UserInfoResponse(sub = "siepkes", name = "Jasper Siepkes", email = "siepkes@serviceplanet.nl")
+        return json(userinfoResponse)
+    }
 
     private fun handleException(error: Throwable): OAuth2HttpResponse {
         log.error("received exception when handling request.", error)
